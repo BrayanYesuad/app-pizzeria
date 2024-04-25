@@ -2,6 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
 // Configuración del middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -29,6 +32,11 @@ app.get('/usuarios', (req, res) => {
             res.json(rows);
         }
     });
+});
+
+// Iniciar el servidor
+app.listen(PORT, () => {
+    console.log(`Servidor iniciado en el puerto ${PORT}`);
 });
 
 // Iniciar el servidor
