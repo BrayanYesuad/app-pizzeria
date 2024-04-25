@@ -2,12 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
 // Configuración del middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Ruta para la página de inicio
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
 
 // Conexión a la base de datos
 const db = new sqlite3.Database(':memory:');
