@@ -1,27 +1,35 @@
-const db = require('./database.js');
+const express = require('express');
+const bodyParser = require('body-parser');
+const sqlite3 = require('sqlite3').verbose();
 
-// Iniciar la transacción
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Configuración del middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+// Conexión a la base de datos
+const db = new sqlite3.Database(':memory:');
 db.serialize(() => {
-    db.run("BEGIN TRANSACTION");
+    db.run("CREATE TABLE usuarios (id INTEGER PRIMARY KEY, nombre TEXT, email TEXT, password TEXT)");
+    db.run("CREATE TABLE pizzas (id INTEGER PRIMARY KEY, nombre TEXT, descripcion TEXT, precio REAL)");
+    db.run("CREATE TABLE pedidos (id INTEGER PRIMARY KEY, usuario_id INTEGER, pizza_id INTEGER, cantidad INTEGER, total REAL, FOREIGN KEY(usuario_id) REFERENCES usuarios(id), FOREIGN KEY(pizza_id) REFERENCES pizzas(id))");
+});
 
-    // Insertar nuevo usuario
-    db.run("INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)", ["Juan", "juan@example.com", "contraseña"], function(err) {
+// Ruta para obtener todos los usuarios
+app.get('/usuarios', (req, res) => {
+    db.all("SELECT * FROM usuarios", (err, rows) => {
         if (err) {
             console.error(err.message);
-            db.run("ROLLBACK"); // Deshacer la transacción si hay un error
+            res.status(500).send("Error en el servidor");
         } else {
-            const usuarioId = this.lastID;
-
-            // Insertar pedido correspondiente
-            db.run("INSERT INTO pedidos (usuario_id, pizza_id, cantidad, total) VALUES (?, ?, ?, ?)", [usuarioId, 1, 2, 20.50], function(err) {
-                if (err) {
-                    console.error(err.message);
-                    db.run("ROLLBACK"); // Deshacer la transacción si hay un error
-                } else {
-                    db.run("COMMIT"); // Confirmar la transacción si todo está bien
-                    console.log("Transacción completada correctamente.");
-                }
-            });
+            res.json(rows);
         }
     });
+});
+
+// Iniciar el servidor
+app.listen(PORT, () => {
+    console.log(`Servidor iniciado en el puerto ${PORT}`);
 });
